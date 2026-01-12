@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  
+  - job_name: 'fastapi'
+    static_configs:
+      - targets: ['app:8001']  # Метрики приложения на порту 8001
+  
+  - job_name: 'node'
+    static_configs:
+      - targets: ['app:8000']  # Эндпоинт /metrics FastAPI

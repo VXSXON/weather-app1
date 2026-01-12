@@ -1,0 +1,65 @@
+services:
+  app:
+    build: ./app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/weather_db
+      - WEATHER_API_PROVIDER=openmeteo
+    depends_on:
+      - db
+    networks:
+      - weather-network
+    volumes:
+      - ./app:/app
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine  # Lighter version
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=weather_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - weather-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0  # Specific version
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - weather-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0  # Specific version
+    ports:
+      - "4000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - weather-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+networks:
+  weather-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
