@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine  # Lighter version
+    image: postgres:15-alpine  
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v2.47.0  # Specific version
+    image: prom/prometheus:v2.47.0  
     ports:
       - "9090:9090"
     volumes:
@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:10.1.0  # Specific version
+    image: grafana/grafana:10.1.0  
     ports:
       - "4000:3000"
     volumes:

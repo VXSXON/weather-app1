@@ -10,11 +10,11 @@ from prometheus_client import start_http_server
 import time
 from typing import Dict, Any
 
-# Создаем метрики Prometheus
+
 REQUEST_COUNT = Counter('weather_requests_total', 'Total weather requests', ['status'])
 REQUEST_LATENCY = Histogram('weather_request_latency_seconds', 'Request latency in seconds')
 
-# Создаем таблицы в базе данных
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -23,11 +23,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Конфигурация Open-Meteo API (бесплатно, без ключа!)
+# конфиг
 WEATHER_API_PROVIDER = os.getenv("WEATHER_API_PROVIDER", "openmeteo")
 OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
 
-# Координаты городов
+# координаты городов
 CITY_COORDINATES = {
     "moscow": {"lat": 55.7558, "lon": 37.6173},
     "london": {"lat": 51.5074, "lon": -0.1278},
@@ -41,7 +41,7 @@ CITY_COORDINATES = {
     "казань": {"lat": 55.7961, "lon": 49.1064},
 }
 
-# Коды погоды Open-Meteo
+# коды погоды 
 WEATHER_CODES = {
     0: "Ясно",
     1: "В основном ясно",
@@ -86,7 +86,7 @@ def get_db():
         db.close()
 
 def get_city_coordinates(city: str) -> Dict[str, float]:
-    """Получаем координаты города по его названию"""
+    """получаем координаты города по его названию"""
     city_lower = city.lower().strip()
     
     # Проверяем в нашем словаре
@@ -97,12 +97,12 @@ def get_city_coordinates(city: str) -> Dict[str, float]:
     return {"lat": 55.7558, "lon": 37.6173}
 
 def get_weather_from_openmeteo(city: str) -> Dict[str, Any]:
-    """Получаем погоду из Open-Meteo API"""
+    """получаем погоду из API"""
     try:
         # Получаем координаты города
         coords = get_city_coordinates(city)
         
-        # Параметры запроса
+        # параметры
         params = {
             'latitude': coords['lat'],
             'longitude': coords['lon'],
@@ -112,19 +112,19 @@ def get_weather_from_openmeteo(city: str) -> Dict[str, Any]:
             'forecast_days': 1
         }
         
-        # Делаем запрос к API
+        # запрос к апи
         response = requests.get(OPENMETEO_URL, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
         
-        # Извлекаем текущую погоду
+        # текущая погоду
         current = data['current_weather']
         weather_code = current['weathercode']
         
-        # Получаем описание погоды
+        # описание погоды
         description = WEATHER_CODES.get(weather_code, "Неизвестно")
         
-        # Получаем влажность из почасовых данных
+        # влажность
         humidity = None
         if 'hourly' in data and 'relativehumidity_2m' in data['hourly']:
             humidities = data['hourly']['relativehumidity_2m']
@@ -148,7 +148,7 @@ def get_weather_from_openmeteo(city: str) -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка: {str(e)}")
 
-# ТОЛЬКО GET ЭНДПОИНТЫ - они работают без проблем
+
 @app.get("/weather/{city}")
 async def get_weather_by_city(city: str, db: Session = Depends(get_db)):
     """GET endpoint для получения погоды"""
@@ -157,7 +157,7 @@ async def get_weather_by_city(city: str, db: Session = Depends(get_db)):
     try:
         weather_data = get_weather_from_openmeteo(city)
         
-        # Сохраняем в БД
+        # сохраняем в бд
         db_weather = models.WeatherRequest(
             city=city,
             temperature=weather_data['temperature'],
@@ -240,7 +240,7 @@ async def get_available_cities():
 async def health_check():
     """Проверка здоровья приложения"""
     try:
-        # Простая проверка доступности внешнего API
+        
         response = requests.get(
             "https://api.open-meteo.com/v1/status",
             timeout=5
